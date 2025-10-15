@@ -8,7 +8,7 @@ class SparseMatrix {
         public:
         SparseMatrix();
 
-        void add (int row, int xPos, int yPos);
+        void add (int value, int xPos, int yPos);
         int get(int xPos, int yPos);
         void remove(int xPos, int yPos);
         void printStoredValues();
