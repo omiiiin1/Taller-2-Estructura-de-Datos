@@ -1,4 +1,5 @@
 #include "SparseMatrix.h"
+#include <iostream>
 
 SparseMatrix::SparseMatrix() {
     start = nullptr;
@@ -65,14 +66,63 @@ int SparseMatrix::get(int xPos, int yPos) {
 }
 
 void SparseMatrix::remove(int xPos, int yPos) {
+    Node* actual = start;
+    Node* anterior = nullptr;
+
+    while(actual != nullptr){
+        if(actual->xPos == xPos && actual->yPos == yPos){
+            if (anterior == nullptr)
+            {
+                start = actual->next;
+            }
+            else
+            {
+                anterior->next = actual->next;
+            }
+            delete actual;
+            return;
+        }
+        if(actual->xPos > xPos || (actual->xPos == xPos && actual->yPos > yPos)){
+            break;
+        }
+        anterior = actual;
+        actual = actual->next;  
+    }
    
 }
 
 void SparseMatrix::printStoredValues() {
-    
+    Node* actual = start;
+    if(actual == nullptr){
+        std::cout << "La matriz esta vacia" << std::endl;
+    } 
+    while(actual != nullptr){
+        std::cout << "Valor: " << actual->valor << " Posicion: (" << actual->xPos << ", " << actual->yPos << ")" << std::endl;
+        actual = actual->next;  
+    }  
 }
 
 int SparseMatrix::density() {
+    if(start == nullptr) { return 0; }
+    int maxX = 0;
+    int maxY = 0;
+    int cont = 0;
+
+    Node* actual = start;
+    while(actual != nullptr){
+        if(actual->xPos > maxX){
+            maxX = actual->xPos;
+        }
+        if(actual->yPos > maxY){
+            maxY = actual->yPos;
+        }
+        cont++;
+        actual = actual->next;  
+    }
+    int totalElementos = (maxX + 1) * (maxY + 1);
+    if(totalElementos == 0) { return 0; }
+    return (cont * 100) / totalElementos;
+
    
 }
 
