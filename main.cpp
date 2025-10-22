@@ -2,6 +2,7 @@
 #include "SparseMatrix.h"
 #include <ctime>
 #include <cstdlib>
+#include <cmath>
 
 using namespace std;
 
@@ -10,8 +11,8 @@ void agregarElemento(SparseMatrix& matriz);
 void obtenerElemento(SparseMatrix& matriz);
 void eliminarElemento(SparseMatrix& matriz);
 void pruebaRendimientoCompleto();
+bool generarCoordenadaUnica(int x, int y, bool** ocupadas, int maxCoord);
 
-// Función para generar coordenadas únicas
 bool generarCoordenadaUnica(int x, int y, bool** ocupadas, int maxCoord) {
     if (x >= maxCoord || y >= maxCoord) return false;
     if (!ocupadas[x][y]) {
@@ -79,25 +80,25 @@ int main() {
                 SparseMatrix segundaMatriz;
                 cout << "Ingrese los elementos de la segunda matriz dispersa:" << endl;
                 agregarElemento(segundaMatriz);
-                
+
                 inicio = clock();
                 SparseMatrix* resultado = matrizPrincipal.multiply(&segundaMatriz);
                 fin = clock();
                 tiempo = double(fin - inicio) / CLOCKS_PER_SEC;
-                
+
                 cout << "Resultado de la multiplicacion:" << endl;
                 resultado->printStoredValues();
                 cout << "Tiempo de ejecucion de multiplicacion: " << tiempo << " segundos" << endl;
-                
+
                 delete resultado;
                 break;
             }
             case 7: {
-                cout << "Saliendo del programa." << endl;
+                pruebaRendimientoCompleto();
                 break;
             }
-            case 8: {
-                pruebaRendimientoCompleto();
+            case 0: {
+                cout << "Saliendo del sistema." << endl;
                 break;
             }
             default: {
@@ -106,21 +107,21 @@ int main() {
             }
         }
         cout << "----------------------------------------" << endl;
-    } while (opcion != 7);
+    } while (opcion != 0);
 
     return 0;
 }
 
 void mostrarMenu() {
     cout << "\n**** Sistema de Matrices Poco Pobladas ****" << endl;
-    cout << "1. Agregar dato (con tiempo)" << endl;
-    cout << "2. Obtener dato (con tiempo)" << endl;
-    cout << "3. Eliminar dato (con tiempo)" << endl;
-    cout << "4. Imprimir datos almacenados (con tiempo)" << endl;
-    cout << "5. Calcular densidad (con tiempo)" << endl;
-    cout << "6. Multiplicar por otra matriz dispersa (con tiempo)" << endl;
-    cout << "7. Salir" << endl;
-    cout << "8. Ejecutar pruebas de rendimiento completas (80 pruebas)" << endl;
+    cout << "1. Agregar dato " << endl;
+    cout << "2. Obtener dato " << endl;
+    cout << "3. Eliminar dato " << endl;
+    cout << "4. Imprimir datos almacenados " << endl;
+    cout << "5. Calcular densidad " << endl;
+    cout << "6. Multiplicar por otra matriz " << endl;
+    cout << "7. Ejecutar pruebas de rendimiento" << endl;
+    cout << "0. Salir del sistema" << endl;
 }
 
 void agregarElemento(SparseMatrix& matriz) {
@@ -161,246 +162,164 @@ void eliminarElemento(SparseMatrix& matriz) {
 
 void pruebaAdd(int cantidadDatos, double densidadObjetivo, int numeroPrueba) {
     SparseMatrix matriz;
+    matriz.setModoPrueba(true); 
+
     srand(time(nullptr));
-    
     int dimension = (int)(sqrt(cantidadDatos / densidadObjetivo)) + 1;
     if (dimension < 10) dimension = 10;
-    
+
     bool** ocupadas = new bool*[dimension];
-    for (int i = 0; i < dimension; i++) {
-        ocupadas[i] = new bool[dimension]();
-    }
-    
+    for (int i = 0; i < dimension; i++) ocupadas[i] = new bool[dimension]();
+
     clock_t inicio = clock();
-    
-    int insertados = 0;
-    int intentos = 0;
-    int maxIntentos = cantidadDatos * 10;
-    
+    int insertados = 0, intentos = 0, maxIntentos = cantidadDatos * 10;
+
     while (insertados < cantidadDatos && intentos < maxIntentos) {
         int x = rand() % dimension;
         int y = rand() % dimension;
         int valor = rand() % 100 + 1;
-        
+
         if (generarCoordenadaUnica(x, y, ocupadas, dimension)) {
             matriz.add(valor, x, y);
             insertados++;
         }
         intentos++;
     }
-    
+
     clock_t fin = clock();
     double tiempo = double(fin - inicio) / CLOCKS_PER_SEC;
-    
-    cout << "Prueba " << numeroPrueba << " - ADD: " << cantidadDatos 
-         << " datos, Densidad " << (densidadObjetivo*100) << "%, Tiempo: " 
-         << tiempo << "s, Insertados: " << insertados << "/" << cantidadDatos << endl;
-    
-    
-    if (cantidadDatos <= 100) {
-        cout << "  Elementos insertados: ";
-        matriz.printStoredValues();
-    }
-    
-    for (int i = 0; i < dimension; i++) {
-        delete[] ocupadas[i];
-    }
+
+    cout << "Prueba " << numeroPrueba << " - ADD: " << cantidadDatos
+         << " datos, Densidad " << (densidadObjetivo * 100)
+         << "%, Tiempo: " << tiempo << "s, Insertados: "
+         << insertados << "/" << cantidadDatos << endl;
+
+    for (int i = 0; i < dimension; i++) delete[] ocupadas[i];
     delete[] ocupadas;
 }
 
 void pruebaGet(int cantidadDatos, double densidadObjetivo, int numeroPrueba) {
     SparseMatrix matriz;
+    matriz.setModoPrueba(true);
+
     srand(time(nullptr));
-    
     int dimension = (int)(sqrt(cantidadDatos / densidadObjetivo)) + 1;
     if (dimension < 10) dimension = 10;
-    
+
     bool** ocupadas = new bool*[dimension];
-    for (int i = 0; i < dimension; i++) {
-        ocupadas[i] = new bool[dimension]();
-    }
-    
-    
-    int insertados = 0;
-    int intentos = 0;
-    int maxIntentos = cantidadDatos * 10;
-    
+    for (int i = 0; i < dimension; i++) ocupadas[i] = new bool[dimension]();
+
+    int insertados = 0, intentos = 0, maxIntentos = cantidadDatos * 10;
     while (insertados < cantidadDatos && intentos < maxIntentos) {
         int x = rand() % dimension;
         int y = rand() % dimension;
         int valor = rand() % 100 + 1;
-        
         if (generarCoordenadaUnica(x, y, ocupadas, dimension)) {
             matriz.add(valor, x, y);
             insertados++;
         }
         intentos++;
     }
-    
-    
+
     clock_t inicio = clock();
-    
     for (int i = 0; i < 1000; i++) {
-        int x = rand() % dimension;
-        int y = rand() % dimension;
-        matriz.get(x, y);
+        matriz.get(rand() % dimension, rand() % dimension);
     }
-    
     clock_t fin = clock();
     double tiempo = double(fin - inicio) / CLOCKS_PER_SEC;
-    
-    cout << "Prueba " << numeroPrueba << " - GET: " << cantidadDatos 
-         << " datos, Densidad " << (densidadObjetivo*100) << "%, Tiempo: " 
-         << tiempo << "s (1000 operaciones)" << endl;
-    
-    for (int i = 0; i < dimension; i++) {
-        delete[] ocupadas[i];
-    }
+
+    cout << "Prueba " << numeroPrueba << " - GET: " << cantidadDatos
+         << " datos, Densidad " << (densidadObjetivo * 100)
+         << "%, Tiempo: " << tiempo << "s (1000 operaciones)" << endl;
+
+    for (int i = 0; i < dimension; i++) delete[] ocupadas[i];
     delete[] ocupadas;
 }
 
 void pruebaRemove(int cantidadDatos, double densidadObjetivo, int numeroPrueba) {
     SparseMatrix matriz;
+    matriz.setModoPrueba(true);
+
     srand(time(nullptr));
-    
     int dimension = (int)(sqrt(cantidadDatos / densidadObjetivo)) + 1;
     if (dimension < 10) dimension = 10;
-    
+
     bool** ocupadas = new bool*[dimension];
-    for (int i = 0; i < dimension; i++) {
-        ocupadas[i] = new bool[dimension]();
-    }
-    
-    // Llenar la matriz primero
-    int insertados = 0;
-    int intentos = 0;
-    int maxIntentos = cantidadDatos * 10;
-    
+    for (int i = 0; i < dimension; i++) ocupadas[i] = new bool[dimension]();
+
+    int insertados = 0, intentos = 0, maxIntentos = cantidadDatos * 10;
     while (insertados < cantidadDatos && intentos < maxIntentos) {
         int x = rand() % dimension;
         int y = rand() % dimension;
         int valor = rand() % 100 + 1;
-        
         if (generarCoordenadaUnica(x, y, ocupadas, dimension)) {
             matriz.add(valor, x, y);
             insertados++;
         }
         intentos++;
     }
-    
-    
-    if (cantidadDatos <= 100) {
-        cout << "  Antes de eliminar: ";
-        matriz.printStoredValues();
-    }
-    
-    
+
     clock_t inicio = clock();
-    
     int eliminaciones = min(500, cantidadDatos);
     for (int i = 0; i < eliminaciones; i++) {
-        int x = rand() % dimension;
-        int y = rand() % dimension;
-        matriz.remove(x, y);
+        matriz.remove(rand() % dimension, rand() % dimension);
     }
-    
     clock_t fin = clock();
     double tiempo = double(fin - inicio) / CLOCKS_PER_SEC;
-    
-    cout << "Prueba " << numeroPrueba << " - REMOVE: " << cantidadDatos 
-         << " datos, Densidad " << (densidadObjetivo*100) << "%, Tiempo: " 
-         << tiempo << "s (" << eliminaciones << " operaciones)" << endl;
-    
-    
-    if (cantidadDatos <= 100) {
-        cout << "  Despues de eliminar: ";
-        matriz.printStoredValues();
-    }
-    
-    for (int i = 0; i < dimension; i++) {
-        delete[] ocupadas[i];
-    }
+
+    cout << "Prueba " << numeroPrueba << " - REMOVE: " << cantidadDatos
+         << " datos, Densidad " << (densidadObjetivo * 100)
+         << "%, Tiempo: " << tiempo << "s (" << eliminaciones << " operaciones)" << endl;
+
+    for (int i = 0; i < dimension; i++) delete[] ocupadas[i];
     delete[] ocupadas;
 }
 
 void pruebaMultiply(int cantidadDatos, double densidadObjetivo, int numeroPrueba) {
     SparseMatrix matrizA, matrizB;
+    matrizA.setModoPrueba(true);
+    matrizB.setModoPrueba(true);
+
     srand(time(nullptr));
-    
     int dimension = (int)(sqrt(cantidadDatos / densidadObjetivo)) + 1;
     if (dimension < 10) dimension = 10;
-    
-    // Llenar matriz A
+
     bool** ocupadasA = new bool*[dimension];
-    for (int i = 0; i < dimension; i++) {
-        ocupadasA[i] = new bool[dimension]();
-    }
-    
-    int insertadosA = 0;
-    int intentosA = 0;
+    for (int i = 0; i < dimension; i++) ocupadasA[i] = new bool[dimension]();
+
+    bool** ocupadasB = new bool*[dimension];
+    for (int i = 0; i < dimension; i++) ocupadasB[i] = new bool[dimension]();
+
+    int insertadosA = 0, intentosA = 0, insertadosB = 0, intentosB = 0;
     int maxIntentos = cantidadDatos * 10;
-    
+
     while (insertadosA < cantidadDatos && intentosA < maxIntentos) {
-        int x = rand() % dimension;
-        int y = rand() % dimension;
-        int valor = rand() % 10 + 1;
-        
-        if (generarCoordenadaUnica(x, y, ocupadasA, dimension)) {
-            matrizA.add(valor, x, y);
+        if (generarCoordenadaUnica(rand() % dimension, rand() % dimension, ocupadasA, dimension)) {
+            matrizA.add(rand() % 10 + 1, rand() % dimension, rand() % dimension);
             insertadosA++;
         }
         intentosA++;
     }
-    
-    // Llenar matriz B
-    bool** ocupadasB = new bool*[dimension];
-    for (int i = 0; i < dimension; i++) {
-        ocupadasB[i] = new bool[dimension]();
-    }
-    
-    int insertadosB = 0;
-    int intentosB = 0;
-    
+
     while (insertadosB < cantidadDatos && intentosB < maxIntentos) {
-        int x = rand() % dimension;
-        int y = rand() % dimension;
-        int valor = rand() % 10 + 1;
-        
-        if (generarCoordenadaUnica(x, y, ocupadasB, dimension)) {
-            matrizB.add(valor, x, y);
+        if (generarCoordenadaUnica(rand() % dimension, rand() % dimension, ocupadasB, dimension)) {
+            matrizB.add(rand() % 10 + 1, rand() % dimension, rand() % dimension);
             insertadosB++;
         }
         intentosB++;
     }
-    
-    // Mostrar matrices si son pequeñas
-    if (cantidadDatos <= 100) {
-        cout << "  Matriz A: ";
-        matrizA.printStoredValues();
-        cout << "  Matriz B: ";
-        matrizB.printStoredValues();
-    }
-    
-    // Realizar multiplicación
+
     clock_t inicio = clock();
-    
     SparseMatrix* resultado = matrizA.multiply(&matrizB);
-    
     clock_t fin = clock();
     double tiempo = double(fin - inicio) / CLOCKS_PER_SEC;
-    
-    cout << "Prueba " << numeroPrueba << " - MULTIPLY: " << cantidadDatos 
-         << " datos, Densidad " << (densidadObjetivo*100) << "%, Tiempo: " 
-         << tiempo << "s" << endl;
-    
-    // Mostrar resultado si es pequeño
-    if (cantidadDatos <= 100) {
-        cout << "  Resultado: ";
-        resultado->printStoredValues();
-    }
-    
+
+    cout << "Prueba " << numeroPrueba << " - MULTIPLY: " << cantidadDatos
+         << " datos, Densidad " << (densidadObjetivo * 100)
+         << "%, Tiempo: " << tiempo << "s" << endl;
+
     delete resultado;
-    
+
     for (int i = 0; i < dimension; i++) {
         delete[] ocupadasA[i];
         delete[] ocupadasB[i];
@@ -410,58 +329,40 @@ void pruebaMultiply(int cantidadDatos, double densidadObjetivo, int numeroPrueba
 }
 
 void pruebaRendimientoCompleto() {
-    cout << "\n=== PRUEBAS DE RENDIMIENTO ===" << endl;
-   
-    
+    cout << "\n=== PRUEBAS DE RENDIMIENTO===" << endl;
+
     int setsDatos[] = {50, 250, 500, 1000, 5000};
     double densidades[] = {0.2, 0.7};
-    
+
     srand(time(nullptr));
-    
-    
-    cout << "\n--- Pruebas de Adición ---" << endl;
+
+    cout << "\n--- Pruebas ADD ---" << endl;
     int pruebaCount = 1;
-    for (int cantidad : setsDatos) {
-        for (double densidad : densidades) {
-            for (int muestra = 0; muestra < 2; muestra++) {
+    for (int cantidad : setsDatos)
+        for (double densidad : densidades)
+            for (int muestra = 0; muestra < 2; muestra++)
                 pruebaAdd(cantidad, densidad, pruebaCount++);
-            }
-        }
-    }
-    
-    
-    cout << "\n--- Pruebas de obtención ---" << endl;
+
+    cout << "\n--- Pruebas GET ---" << endl;
     pruebaCount = 1;
-    for (int cantidad : setsDatos) {
-        for (double densidad : densidades) {
-            for (int muestra = 0; muestra < 2; muestra++) {
+    for (int cantidad : setsDatos)
+        for (double densidad : densidades)
+            for (int muestra = 0; muestra < 2; muestra++)
                 pruebaGet(cantidad, densidad, pruebaCount++);
-            }
-        }
-    }
-    
-   
-    cout << "\n--- Pruebas de eliminación ---" << endl;
+
+    cout << "\n--- Pruebas REMOVE ---" << endl;
     pruebaCount = 1;
-    for (int cantidad : setsDatos) {
-        for (double densidad : densidades) {
-            for (int muestra = 0; muestra < 2; muestra++) {
+    for (int cantidad : setsDatos)
+        for (double densidad : densidades)
+            for (int muestra = 0; muestra < 2; muestra++)
                 pruebaRemove(cantidad, densidad, pruebaCount++);
-            }
-        }
-    }
-    
-   
-    cout << "\n--- Pruebas de Multiplicación ---" << endl;
+
+    cout << "\n--- Pruebas MULTIPLY ---" << endl;
     pruebaCount = 1;
-    for (int cantidad : setsDatos) {
-        for (double densidad : densidades) {
-            for (int muestra = 0; muestra < 2; muestra++) {
+    for (int cantidad : setsDatos)
+        for (double densidad : densidades)
+            for (int muestra = 0; muestra < 2; muestra++)
                 pruebaMultiply(cantidad, densidad, pruebaCount++);
-            }
-        }
-    }
-    
+
     cout << "\n=== TODAS LAS PRUEBAS COMPLETADAS ===" << endl;
-    
 }
