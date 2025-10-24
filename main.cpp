@@ -160,6 +160,8 @@ void eliminarElemento(SparseMatrix& matriz) {
     cout << "Elemento eliminado si existia." << endl;
 }
 
+// --------------------------- PRUEBAS DE RENDIMIENTO -----------------------------
+
 void pruebaAdd(int cantidadDatos, double densidadObjetivo, int numeroPrueba) {
     SparseMatrix matriz;
     matriz.setModoPrueba(true); 
@@ -231,45 +233,6 @@ void pruebaGet(int cantidadDatos, double densidadObjetivo, int numeroPrueba) {
     cout << "Prueba " << numeroPrueba << " - GET: " << cantidadDatos
          << " datos, Densidad " << (densidadObjetivo * 100)
          << "%, Tiempo: " << tiempo << "s (1000 operaciones)" << endl;
-
-    for (int i = 0; i < dimension; i++) delete[] ocupadas[i];
-    delete[] ocupadas;
-}
-
-void pruebaRemove(int cantidadDatos, double densidadObjetivo, int numeroPrueba) {
-    SparseMatrix matriz;
-    matriz.setModoPrueba(true);
-
-    srand(time(nullptr));
-    int dimension = (int)(sqrt(cantidadDatos / densidadObjetivo)) + 1;
-    if (dimension < 10) dimension = 10;
-
-    bool** ocupadas = new bool*[dimension];
-    for (int i = 0; i < dimension; i++) ocupadas[i] = new bool[dimension]();
-
-    int insertados = 0, intentos = 0, maxIntentos = cantidadDatos * 10;
-    while (insertados < cantidadDatos && intentos < maxIntentos) {
-        int x = rand() % dimension;
-        int y = rand() % dimension;
-        int valor = rand() % 100 + 1;
-        if (generarCoordenadaUnica(x, y, ocupadas, dimension)) {
-            matriz.add(valor, x, y);
-            insertados++;
-        }
-        intentos++;
-    }
-
-    clock_t inicio = clock();
-    int eliminaciones = min(500, cantidadDatos);
-    for (int i = 0; i < eliminaciones; i++) {
-        matriz.remove(rand() % dimension, rand() % dimension);
-    }
-    clock_t fin = clock();
-    double tiempo = double(fin - inicio) / CLOCKS_PER_SEC;
-
-    cout << "Prueba " << numeroPrueba << " - REMOVE: " << cantidadDatos
-         << " datos, Densidad " << (densidadObjetivo * 100)
-         << "%, Tiempo: " << tiempo << "s (" << eliminaciones << " operaciones)" << endl;
 
     for (int i = 0; i < dimension; i++) delete[] ocupadas[i];
     delete[] ocupadas;
@@ -349,13 +312,6 @@ void pruebaRendimientoCompleto() {
         for (double densidad : densidades)
             for (int muestra = 0; muestra < 2; muestra++)
                 pruebaGet(cantidad, densidad, pruebaCount++);
-
-    cout << "\n--- Pruebas REMOVE ---" << endl;
-    pruebaCount = 1;
-    for (int cantidad : setsDatos)
-        for (double densidad : densidades)
-            for (int muestra = 0; muestra < 2; muestra++)
-                pruebaRemove(cantidad, densidad, pruebaCount++);
 
     cout << "\n--- Pruebas MULTIPLY ---" << endl;
     pruebaCount = 1;
